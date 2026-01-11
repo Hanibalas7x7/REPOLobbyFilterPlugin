@@ -7,9 +7,11 @@ A BepInEx plugin for R.E.P.O. that automatically filters Russian and Belarusian 
 - **Automatic Cyrillic Detection** - Blocks lobbies with Russian/Belarusian characters
 - **Keyword Filtering** - Blocks lobbies containing RU, BY, RUS, RUSSIA, BELARUS, (RUS), (RU), (BY)
 - **Region Filtering** - Blocks lobbies from Russia/Belarus based on Photon region data
-- **Persistent Blocklist** - Auto-saves blocked lobby GUIDs to prevent rename evasion
-- **Minimal Logging** - Clean console output showing blocked count and blocklist size
-- **Manual Blocking** - Edit blocklist file to add/remove lobbies manually
+- **Persistent Blocklists** - Separate auto-blocked and manual blocklists with readable format
+- **Hotkey Blocking** - Press **B** or **F9** to instantly block the lobby you're hovering over
+- **GUID-Based Blocking** - Prevents rename evasion by blocking lobby GUIDs permanently
+- **Readable Format** - Blocklist files show both GUID and lobby name for easy management
+- **Minimal Logging** - Clean console output showing blocked count and separate list sizes
 
 ## Installation
 
@@ -24,17 +26,30 @@ A BepInEx plugin for R.E.P.O. that automatically filters Russian and Belarusian 
 
 3. **Done!** - The plugin starts filtering automatically
 
+## Usage
+
+### Automatic Filtering
+The plugin automatically filters lobbies based on Cyrillic characters, keywords, and region codes.
+
+### Manual Blocking via Hotkey
+1. In the server browser, **hover your mouse** over any lobby you want to block
+2. Press **B** or **F9** while hovering
+3. The lobby will be added to your manual blocklist
+
+**Note:** You must be hovering over a lobby when pressing the hotkey. The hovered lobby is highlighted in the UI.
+
 ## How It Works
 
 The plugin intercepts the server list before it's displayed and removes lobbies that match any of these criteria:
 
-1. **GUID Blocklist** - Lobby GUID is in the blocklist file (permanent block even if renamed)
-2. **Name Blocklist** - Lobby name is in the blocklist file
+1. **Auto-Blocklist** - Lobby GUID is in the auto-blocked list (detected by criteria 3-5)
+2. **Manual Blocklist** - Lobby GUID is in the manual list (added via B/F9 hotkey or file edit)
 3. **Cyrillic Characters** - Lobby name contains Russian/Belarusian alphabet (U+0400 to U+04FF)
 4. **Keywords** - Lobby name contains: RU, BY, RUS, RUSSIA, BELARUS, (RUS), (RU), (BY)
 5. **Region Code** - Photon region is RU, BY, Russia, or Belarus
 
-When a lobby is blocked by criteria 3-5, its GUID is automatically saved to the blocklist for future filtering.
+When a lobby matches criteria 3-5, its GUID is automatically saved to `REPOLobbyFilter_AutoBlocked.txt`.
+When you press B/F9, the hovered lobby's GUID is saved to `REPOLobbyFilter_ManualBlocked.txt`.
 
 ## Configuration
 
@@ -45,27 +60,54 @@ The plugin creates a config file at:
 [Filter]
 # Enable or disable filtering (default: true)
 EnableFilter = true
+
+[Hotkey]
+# Key to manually block currently hovered lobby (default: B)
+BlockKey = B
 ```
 
-## Manual Blocking
+You can change `BlockKey` to any Unity KeyCode (e.g., `F9`, `Delete`, `X`, etc.)
 
-You can manually add lobbies to the blocklist by editing:
-`R.E.P.O\BepInEx\config\REPOLobbyFilter_Blocklist.txt`
+## Blocklist Files
 
-Each line can contain either:
-- A lobby GUID (e.g., `550e8400-e29b-41d4-a716-446655440000`)
-- A lobby name (e.g., `My Server Name`)
+The plugin creates two separate blocklist files:
 
-GUID blocking is recommended as it prevents rename evasion. The plugin logs GUIDs when auto-blocking.
+### Auto-Blocked Lobbies
+`R.E.P.O\BepInEx\config\REPOLobbyFilter_AutoBlocked.txt`
+
+Contains lobbies automatically detected by Cyrillic/keyword/region filters.
+
+### Manually Blocked Lobbies
+`R.E.P.O\BepInEx\config\REPOLobbyFilter_ManualBlocked.txt`
+
+Contains lobbies you blocked via the B/F9 hotkey or manual file editing.
+
+### File Format
+Both files use the same readable format:
+```
+550e8400-e29b-41d4-a716-446655440000 | My Server Name
+8f6a0abb-8169-4398-a341-945038ff9b40 | GERMAN +18
+```
+
+Each line contains:
+- **GUID** (used for blocking) - Permanent, prevents rename evasion
+- **Name** (for reference) - Helps you identify what was blocked
+
+You can manually edit these files to add/remove entries. Only the GUID portion is used for blocking.
 
 ## Console Output
 
 Typical log messages:
 ```
-[Info   :REPOLobbyFilter] Loaded 93 blocked lobbies from file
+[Info   :REPOLobbyFilter] Loaded 422 auto-blocked lobbies
+[Info   :REPOLobbyFilter] Loaded 12 manually blocked lobbies
 [Info   :REPOLobbyFilter] Lobby filter ready! Blocked lobbies will be auto-saved.
-[Info   :REPOLobbyFilter] Blocked 23/65 lobbies (Total in blocklist: 93)
-[Info   :REPOLobbyFilter] ✅ Auto-saved to blocklist: "Русский Сервер" (GUID: 550e8400-e29b-41d4-a716-446655440000)
+[Info   :REPOLobbyFilter] Press [B] or [F9] to manually block currently displayed lobby
+[Info   :REPOLobbyFilter] Auto-blocked lobbies: F:\..\REPOLobbyFilter_AutoBlocked.txt
+[Info   :REPOLobbyFilter] Manual blocklist: F:\..\REPOLobbyFilter_ManualBlocked.txt
+[Info   :REPOLobbyFilter] Blocked 8/24 lobbies (Auto: 422, Manual: 12, Total: 434)
+[Info   :REPOLobbyFilter] ✅ Auto-blocked: "Русский Сервер" (GUID: 550e8400-...)
+[Warning:REPOLobbyFilter] ⛔ MANUALLY BLOCKED: "GERMAN +18"
 ```
 
 ## Building from Source
@@ -83,10 +125,16 @@ Typical log messages:
 - Ensure BepInEx is properly installed
 - Verify .dll is in the `plugins` folder
 
-**Still seeing Russian lobbies:**
+**Still seeing unwanted lobbies:**
+- Hover over the lobby and press **B** or **F9** to block it manually
 - Check if lobby name uses special characters or formats
 - Report the lobby name so keyword detection can be improved
-- Manually add the lobby to the blocklist file
+- Edit the manual blocklist file to add the lobby GUID directly
+
+**Hotkey not working:**
+- Make sure you're **hovering** over a lobby when pressing the key
+- Check `BepInEx\LogOutput.log` for "KEY PRESSED IN UPDATE PATCH" message
+- Try changing the hotkey in the config file to a different key
 
 **Too many lobbies blocked:**
 - Set `EnableFilter = false` in the config file
@@ -95,9 +143,14 @@ Typical log messages:
 ## Technical Details
 
 - **Framework:** BepInEx 5.4.23.4, .NET Framework 4.6
-- **Patching:** Harmony 2.x Prefix patch on `MenuPageServerList.OnRoomListUpdate`
-- **Detection:** Unicode range check, keyword matching, Photon CustomProperties
-- **Storage:** Plain text file with HashSet for fast lookup
+- **Patching:** Harmony 2.x patches:
+  - Prefix on `MenuPageServerList.OnRoomListUpdate` (lobby filtering)
+  - Postfix on `MenuPageServerList.Update` (hotkey detection)
+- **Hover Detection:** Monitors `MenuElementHover.isHovering` to identify selected lobby
+- **GUID Resolution:** Extracts room GUID from `MenuElementServer.roomName` field
+- **Detection:** Unicode range check, keyword matching, Photon region detection
+- **Storage:** Two plain text files (auto/manual) with HashSet for O(1) lookup
+- **Format:** `GUID | Name` format for human readability while maintaining GUID-based blocking
 
 ## License
 
