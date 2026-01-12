@@ -2,6 +2,12 @@
 
 All notable changes to REPOLobbyFilter will be documented in this file.
 
+## [1.1.1] - 2026-01-12
+
+### Fixed
+- Added automatic migration from v1.0.0 blocklist format to v1.1.x format
+- Old blocklist file is automatically renamed as backup (.v1.0.backup)
+
 ## [1.1.0] - 2026-01-12
 
 ### Added

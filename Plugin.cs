@@ -36,6 +36,10 @@ namespace REPOLobbyFilter
             // Setup blocklists
             autoBlocklistPath = System.IO.Path.Combine(Paths.ConfigPath, "REPOLobbyFilter_AutoBlocked.txt");
             manualBlocklistPath = System.IO.Path.Combine(Paths.ConfigPath, "REPOLobbyFilter_ManualBlocked.txt");
+            
+            // Migrate old blocklist from v1.0.0 if it exists
+            MigrateOldBlocklist();
+            
             LoadBlocklists();
             
             // Apply Harmony patches
@@ -47,6 +51,44 @@ namespace REPOLobbyFilter
             Logger.LogInfo($"Press [B] or [F9] to manually block currently displayed lobby");
             Logger.LogInfo($"Auto-blocked lobbies: {autoBlocklistPath}");
             Logger.LogInfo($"Manual blocklist: {manualBlocklistPath}");
+        }
+
+        void MigrateOldBlocklist()
+        {
+            try
+            {
+                var oldBlocklistPath = System.IO.Path.Combine(Paths.ConfigPath, "REPOLobbyFilter_Blocklist.txt");
+                
+                // If old blocklist exists and new auto-blocklist doesn't, migrate it
+                if (System.IO.File.Exists(oldBlocklistPath) && !System.IO.File.Exists(autoBlocklistPath))
+                {
+                    Logger.LogInfo($"Found v1.0.0 blocklist, migrating to v1.1.0 format...");
+                    
+                    var oldLines = System.IO.File.ReadAllLines(oldBlocklistPath);
+                    foreach (var line in oldLines)
+                    {
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            var guid = line.Trim();
+                            autoBlocklist.Add(guid);
+                            // No display name available from old format, will be added on next detection
+                        }
+                    }
+                    
+                    SaveAutoBlocklist();
+                    
+                    // Rename old file as backup
+                    var backupPath = System.IO.Path.Combine(Paths.ConfigPath, "REPOLobbyFilter_Blocklist.txt.v1.0.backup");
+                    System.IO.File.Move(oldBlocklistPath, backupPath);
+                    
+                    Logger.LogInfo($"Migration complete! Migrated {autoBlocklist.Count} entries.");
+                    Logger.LogInfo($"Old file backed up to: REPOLobbyFilter_Blocklist.txt.v1.0.backup");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error migrating old blocklist: {ex.Message}");
+            }
         }
 
         void PatchMenuPageServerListUpdate()
