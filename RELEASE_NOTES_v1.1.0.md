@@ -34,9 +34,16 @@ Blocked 8/24 lobbies (Auto: 422, Manual: 12, Total: 434)
 
 ## 🔧 Installation
 
-1. Download `REPOLobbyFilter.dll` from the [Releases page](https://github.com/yourusername/REPOLobbyFilter/releases)
-2. Place it in `R.E.P.O\BepInEx\plugins\`
-3. Launch the game and start blocking!
+### Prerequisites
+1. **Install BepInEx** (if not already installed):
+   - Download BepInEx 5.4.23+ from https://github.com/BepInEx/BepInEx/releases
+   - Extract to your R.E.P.O. game folder
+   - Run the game once to generate BepInEx folders
+
+### Plugin Installation
+2. Download `REPOLobbyFilter.dll` from the [Releases page](https://github.com/Hanibalas7x7/REPOLobbyFilterPlugin/releases)
+3. Place it in `R.E.P.O\BepInEx\plugins\`
+4. Launch the game and start blocking!
 
 ## 📝 Configuration
 
@@ -73,7 +80,7 @@ Your old `REPOLobbyFilter_Blocklist.txt` will be automatically migrated:
 
 ## 🙏 Feedback
 
-Report issues or suggest features on the [GitHub Issues page](https://github.com/yourusername/REPOLobbyFilter/issues).
+Report issues or suggest features on the [GitHub Issues page](https://github.com/Hanibalas7x7/REPOLobbyFilterPlugin/issues).
 
 ---
 
